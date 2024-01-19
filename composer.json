@@ -13,5 +13,6 @@
         "psr-4": {
             "Swipe\\lib\\": "classes/"
         }
-    }
+    },
+    "minimum-stability": "dev"
 }
