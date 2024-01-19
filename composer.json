@@ -1,5 +1,5 @@
 {
-    "name": "fabian/swipe-woocommerce-php-sdk",
+    "name": "pacheco/swipe-woocommerce-php-sdk",
     "description": "sdk con metodos y clases necesarios para las transacciones",
     "type": "library",
     "authors": [
