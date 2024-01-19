@@ -1,0 +1,12 @@
+{
+    "name": "fabian/swipe-woocommerce-php-sdk",
+    "description": "sdk con metodos y clases necesarios para las transacciones",
+    "type": "library",
+    "authors": [
+        {
+            "name": "fabian-pacheco",
+            "email": "fabian.pacheco@haulmer.com"
+        }
+    ],
+    "require": {}
+}
