@@ -8,5 +8,10 @@
             "email": "fabian.pacheco@haulmer.com"
         }
     ],
-    "require": {}
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Swipe\\lib\\": "classes/"
+        }
+    }
 }
