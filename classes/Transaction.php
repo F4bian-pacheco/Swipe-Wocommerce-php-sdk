@@ -43,30 +43,8 @@ class Transaction
         $response = $this->_initTransaction($data);
     }
 
-    /**
-     * Genera firma de transaccion
-     * @param $data contiene arreglo con los datos a enviar
-     */
-    public function generarFirma(array $data)
-    {
-        unset($data['x_signature']);
 
-        ksort($data);
-
-        $message = '';
-        foreach ($data as $key => $value) {
-            if ($key == 'x_session_id') continue;
-            $message .= $key . $value;
-        }
-
-        echo "<pre>";
-        echo $message;
-        echo "</pre>";
-
-        $data['x_signature'] = hash_hmac('sha256', $message, 'koGT79KqSy0lnwXnVxB8ARVLXBagFTa15AyYMH1dNLQAvdAOq9DseDWIZiB3YtcawcLHRDbzMrNGUeUES0IXvO0ogNUkkmhG7BGPTpnw1ZZw3jatAElhoVMcCYjZP7Nt');
-    }
-
-    public function obtenerFirma(array $datos, string $llaveSecreta)
+    public function obtenerFirma(array $datos, string $llaveSecreta) // equivalente a generateTextToSign y generateSignature
     {
         ksort($datos);
         $firmar = '';
@@ -75,9 +53,6 @@ class Transaction
                 $firmar .= $llave . $valor;
             }
         }
-        // echo "<pre>";
-        //     echo $firmar;
-        // echo "</pre>";
 
         return hash_hmac("sha256", $firmar, $llaveSecreta);
     }
@@ -97,12 +72,12 @@ class Transaction
         if (empty($data['x_signature'])) {
             return false;
         }
+        // validate monto
+        if ($data['x_amount'] != $this->request->amount) {
+            return false;
+        }
 
         $signature = $data['x_signature'];
-
-        /*Se genera la firma*/
-        // $this->generarFirma($data);
-
 
         return  $data['x_signature'] == $this->obtenerFirma($data, $this->token_secret);;
     }
@@ -113,13 +88,6 @@ class Transaction
      */
     function _initTransaction($request)
     {
-        // $this->urls[$this->environment] = 'https://core.payment.haulmer.com/api/v1/payment';
-
-        // echo "<pre>";
-        //     var_dump($this->urls[$this->environment]);
-        //     var_dump($request);
-        // echo "</pre>";
-        // exit;
 
         // Dispara formulario POST
         $html = '';
@@ -141,21 +109,5 @@ class Transaction
         $html .= '</html>';
 
         echo $html;
-    }
-    /**
-     * Funcion que recibe la respuesta de la peticion
-     */
-    public function response($response)
-    {
-        return $response;
-        // if($this->validate($request, $response)){
-        //   return $response;
-        // } else{
-        //   $error = array(
-        //     'Error'  => 'Transacción ' . $this->status[1],
-        //     'Detail' => 'Error de validación de firma'
-        //   );
-        //   return $error;
-        // }
     }
 }
