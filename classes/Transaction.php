@@ -27,8 +27,8 @@ class Transaction
     {
         $this->request = $request;
         $this->urls = array(
-            'DESARROLLO' => getenv('URL_DESARROLLO'),
-            'PRODUCCION' => getenv('URL_PRODUCCION')
+            'DESARROLLO' => $_ENV['URL_DESARROLLO'],
+            'PRODUCCION' => $_ENV['URL_PRODUCCION']
         );
     }
 
@@ -40,11 +40,36 @@ class Transaction
     {
         // generar firma
         $data['x_signature'] = $this->obtenerFirma($data, $this->token_secret);
+        $data["dte"] = $this->generateDTe($data);
         $response = $this->_initTransaction($data);
+        return $response;
     }
 
+    /**
+     * Genera firma de transaccion
+     * @param $data contiene arreglo con los datos a enviar
+     */
+    public function generarFirma(array $data)
+    {
+        unset($data['x_signature']);
 
-    public function obtenerFirma(array $datos, string $llaveSecreta) // equivalente a generateTextToSign y generateSignature
+        ksort($data);
+
+        $message = '';
+        foreach ($data as $key => $value) {
+            if ($key == 'x_session_id') continue;
+            $message .= $key . $value;
+        }
+
+        echo "<pre>";
+        echo $message;
+        echo "</pre>";
+
+        // $data['x_signature'] = hash_hmac('sha256', $message, 'koGT79KqSy0lnwXnVxB8ARVLXBagFTa15AyYMH1dNLQAvdAOq9DseDWIZiB3YtcawcLHRDbzMrNGUeUES0IXvO0ogNUkkmhG7BGPTpnw1ZZw3jatAElhoVMcCYjZP7Nt');
+        $data['x_signature'] = hash_hmac('sha256', $message, $this->token_secret);
+    }
+
+    public function obtenerFirma(array $datos, string $llaveSecreta)
     {
         ksort($datos);
         $firmar = '';
@@ -72,15 +97,29 @@ class Transaction
         if (empty($data['x_signature'])) {
             return false;
         }
-        // validate monto
-        if ($data['x_amount'] != $this->request->amount) {
-            return false;
-        }
 
         $signature = $data['x_signature'];
 
+        /*Se genera la firma*/
+        // $this->generarFirma($data);
+
+
         return  $data['x_signature'] == $this->obtenerFirma($data, $this->token_secret);;
     }
+
+
+    private function generateDTe($data) {
+        if ($data['dte_type'] === 48 || $data['dte_type'] === 33) {
+            return [
+                "net_amount" => $data['x_amount'],
+                "exempt_amount" => 1,
+                "type" => $data['dte_type']
+            ];
+        } else {
+            return [];
+        }
+    }
+    
 
     /**
      * Realiza el llamado a initTransaction
@@ -88,26 +127,51 @@ class Transaction
      */
     function _initTransaction($request)
     {
-
         // Dispara formulario POST
-        $html = '';
+        $actionUrl = htmlspecialchars($this->urls[$this->environment]);
 
-        $html .= '<html>';
-        $html .= '  <head>  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script></head>';
-        $html .= '  <body>';
-        $html .= '    <form name="requesstForm" id="requestForm" action=' . $this->urls[$this->environment] . ' method="POST">';
+        $html = "
+                <html>
+                <head>
+                    <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js\"></script>
+                </head>
+                <body>
+                    <form name=\"requestForm\" id=\"requestForm\" action=\"$actionUrl\" method=\"POST\">
+                ";
+
         foreach ($request as $key => $value) {
-            $html .= '    <input type="hidden" name="' . $key . '" value="' . $value . '" />';
+            $key = htmlspecialchars($key);
+            $value = htmlspecialchars($value);
+            $html .= "      <input type=\"hidden\" name=\"$key\" value=\"$value\" />\n";
         }
-        $html .= '    </form>';
-        $html .= '    <script type="text/javascript">';
-        $html .= '      $(document).ready(function () {';
-        $html .= '        $("#requestForm").submit(); ';
-        $html .= '      });';
-        $html .= '    </script>';
-        $html .= '  </body>';
-        $html .= '</html>';
+
+        $html .= "
+                </form>
+                <script type=\"text/javascript\">
+                $(document).ready(function() {
+                    $('#requestForm').submit();
+                });
+                </script>
+            </body>
+            </html>";
 
         echo $html;
+        return $request;
+    }
+    /**
+     * Funcion que recibe la respuesta de la peticion
+     */
+    public function response($response)
+    {
+        return $response;
+        // if($this->validate($request, $response)){
+        //   return $response;
+        // } else{
+        //   $error = array(
+        //     'Error'  => 'Transacción ' . $this->status[1],
+        //     'Detail' => 'Error de validación de firma'
+        //   );
+        //   return $error;
+        // }
     }
 }
