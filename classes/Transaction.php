@@ -130,33 +130,39 @@ class Transaction
         // Dispara formulario POST
         $actionUrl = htmlspecialchars($this->urls[$this->environment]);
 
-        $html = "
-                <html>
-                <head>
-                    <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js\"></script>
-                </head>
-                <body>
-                    <form name=\"requestForm\" id=\"requestForm\" action=\"$actionUrl\" method=\"POST\">
-                ";
-
-        foreach ($request as $key => $value) {
-            $key = htmlspecialchars($key);
-            $value = htmlspecialchars($value);
-            $html .= "      <input type=\"hidden\" name=\"$key\" value=\"$value\" />\n";
+        try {
+            $curl = curl_init();
+            curl_setopt_array(
+                $curl,
+                array(
+                    CURLOPT_URL             => $actionUrl,
+                    CURLOPT_RETURNTRANSFER  => true,
+                    CURLOPT_ENCODING        => "",
+                    CURLOPT_MAXREDIRS       => 10,
+                    CURLOPT_TIMEOUT         => 30,
+                    CURLOPT_HTTP_VERSION    => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_CUSTOMREQUEST   => 'POST',
+                    CURLOPT_HTTPHEADER      => array(
+                        "Content-Type: application/json"
+                    ),
+                    CURLOPT_POSTFIELDS      => json_encode($request),
+                )
+            );
+            $response = curl_exec($curl);
+            error_log("\nResponse: " . $response);
+            $err = curl_error($curl);
+            curl_close($curl);
+            if($err){
+                return $err;
+            }
+            
+            return $response;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return 'error';
+            
         }
-
-        $html .= "
-                </form>
-                <script type=\"text/javascript\">
-                $(document).ready(function() {
-                    $('#requestForm').submit();
-                });
-                </script>
-            </body>
-            </html>";
-
-        echo $html;
-        return $request;
+        return 'error';
     }
     /**
      * Funcion que recibe la respuesta de la peticion
