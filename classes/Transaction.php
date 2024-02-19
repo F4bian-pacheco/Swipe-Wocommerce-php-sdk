@@ -60,12 +60,6 @@ class Transaction
             if ($key == 'x_session_id') continue;
             $message .= $key . $value;
         }
-
-        echo "<pre>";
-        echo $message;
-        echo "</pre>";
-
-        // $data['x_signature'] = hash_hmac('sha256', $message, 'koGT79KqSy0lnwXnVxB8ARVLXBagFTa15AyYMH1dNLQAvdAOq9DseDWIZiB3YtcawcLHRDbzMrNGUeUES0IXvO0ogNUkkmhG7BGPTpnw1ZZw3jatAElhoVMcCYjZP7Nt');
         $data['x_signature'] = hash_hmac('sha256', $message, $this->token_secret);
     }
 
@@ -104,7 +98,7 @@ class Transaction
         // $this->generarFirma($data);
 
 
-        return  $data['x_signature'] == $this->obtenerFirma($data, $this->token_secret);;
+        return  $data['x_signature'] == $this->obtenerFirma($data, $this->token_secret);
     }
 
 
@@ -149,18 +143,15 @@ class Transaction
                 )
             );
             $response = curl_exec($curl);
-            error_log("\nResponse: " . $response);
             $err = curl_error($curl);
             curl_close($curl);
             if($err){
                 return $err;
             }
-            
             return $response;
         } catch (\Throwable $th) {
             //throw $th;
             return 'error';
-            
         }
         return 'error';
     }
